@@ -1,0 +1,440 @@
+H3Proxy / Workshop Versioning Legend
+====================================
+
+This project does not use SemVer.
+
+H3Proxy uses a filesystem-native Workshop lineage system. Version names are meant to describe where a snapshot lives in the project family tree, what condition it is in, and whether it is a frozen checkpoint, recent build, main line, merge, or special role build.
+
+The GUI is the intended way to inspect complex lineage. Manual reading is possible for small/simple projects, but once merges appear the GUI becomes the readable map.
+
+
+Core idea
+=========
+
+There are two kinds of project areas.
+
+Live / rolling tree
+    Files outside Workshop/ are active working copies.
+    These are allowed to change constantly.
+    Newer files outside Workshop/ do not mean Workshop/ is outdated.
+
+Workshop tree
+    Files inside Workshop/ are frozen snapshots/checkpoints.
+    A Workshop snapshot is only valid when the maintainer intentionally takes it.
+    Workshop folders are not just backups. They are lineage specimens.
+
+A release zip usually contains one frozen Workshop specimen. In H3Proxy, each specimen can contain its own:
+
+    h3proxy/
+    client_3ds/
+    tools/
+
+That means each release variant is self-contained instead of depending on a single shared root source tree.
+
+
+Standalone version format
+=========================
+
+General form:
+
+    ORGANISM.FEATURE.BUGFIX.DIVERGENCE FLAGS #ROLE @COMPAT
+
+Machine form:
+
+    <organism>.<feature>.<bugfix>.<divergence><flags>[#role][@compat...]
+
+Example:
+
+    2.10.3.14SEW#PrototypeCore
+
+Meaning:
+
+    organism        2
+    feature         10
+    bugfix          3
+    divergence      14
+    flags           SEW
+    role            PrototypeCore
+
+The dots are not SemVer. The fields are lineage coordinates.
+
+
+Field meanings
+==============
+
+ORGANISM
+    The main project organism or lineage family.
+    For H3Proxy, organism 2 is the major active H3Proxy lineage.
+
+FEATURE
+    The major development movement inside the organism.
+    This often rises when the project gains a new subsystem or structural direction.
+
+BUGFIX
+    A smaller development movement inside the feature line.
+    This does not have to mean only a classic bugfix.
+    It is a sub-lineage/change counter.
+
+DIVERGENCE
+    The specific specimen/divergence/checkpoint slot.
+    When a folder that used to hold one specimen becomes a multi-specimen container, divergence numbers are used to separate the specimens.
+
+FLAGS
+    Status and management letters.
+    These are attached directly after the numeric coordinate.
+
+#ROLE
+    Optional human role label.
+    This explains what the build is for.
+    Example: #PrototypeCore, #PreCore, #NonFatal
+
+@COMPAT
+    Optional compatibility marker.
+    This is used when a specimen targets or remains compatible with another version/build/API/protocol.
+
+
+Flags
+=====
+
+P
+    Placeholder or default effective flag.
+    If no flags are present, the sorter treats the version as P internally.
+
+S
+    Stable.
+    The specimen is structurally stable enough to keep as a meaningful point.
+
+E
+    Experimental.
+    The specimen is trying a new idea or path.
+
+U
+    Unstable.
+    The specimen works in some way, but has known rough behavior or integration risk.
+
+W
+    Working.
+    The specimen is active and can do useful work.
+
+C
+    Checkpoint.
+    The specimen is a verified saved milestone.
+
+M
+    Main.
+    Marks the chosen main branch or main container in a lineage context.
+
+R
+    Recent.
+    Marks the most recent/current specimen or container in a lineage context.
+
+Common combinations:
+
+    SEW
+        Stable / Experimental / Working
+
+    SWC
+        Stable / Working / Checkpoint
+
+    UW
+        Unstable / Working
+
+    SWCMR
+        Stable / Working / Checkpoint / Main / Recent
+
+    MR
+        Main / Recent management container
+
+    R
+        Recent management container
+
+
+Real flags and management flags
+===============================
+
+Real condition flags:
+
+    P S E U W C
+
+Management flags:
+
+    M R
+
+Neutral containers should usually prefer management flags like R, M, or RM.
+
+Specimen folders/files may expose real condition flags like S, E, U, W, C.
+
+
+Role labels
+===========
+
+A role begins with #.
+
+Examples:
+
+    2.9.1.11SWCMR#Core-PreUIbug
+    2.10.2.13UW#NonFatal
+    2.10.3.14SEW#PrototypeCore
+
+Roles are human-readable notes attached to the version name. They are not part of the numeric coordinate, but they are important for understanding what the build represents.
+
+
+Compatibility labels
+====================
+
+A compatibility marker begins with @.
+
+General form:
+
+    2.10.3.14SEW#PrototypeCore@2.9.1.11
+
+Compatibility markers can be used when a specimen is meant to remain compatible with another version, protocol, file format, or release line.
+
+
+Merge version format
+====================
+
+Merge versions use I as the integration marker.
+
+General form:
+
+    PARENT+PARENT I CHILD_ORGANISM.FEATURE.BUGFIX.DIVERGENCE FLAGS #ROLE @COMPAT
+
+Machine form:
+
+    <parent>+<parent>I<organism>.<feature>.<bugfix>.<divergence><flags>[#role][@compat...]
+
+Examples:
+
+    5+6I11.0.1.8M
+    5+3.9I8.6.3.9WEUC
+
+Merge notation is directional and bottom-up.
+
+    A+BIC.x.y.z
+
+means:
+
+    A is merged into base/receiving lineage B
+    C is the resulting integration lineage
+
+Order matters.
+
+    5+6I11
+
+does not mean the same thing as:
+
+    6+5I11
+
+A parent reference can be loose or exact.
+
+Loose parent reference:
+
+    5
+
+means organism 5 generally.
+
+Exact parent reference:
+
+    3.9
+
+means organism 3, divergence 9.
+
+The sorter can use exact parent divergence numbers for merge birth math.
+
+
+Merge zero-fill behavior
+========================
+
+For root-dropped merge births, zero fields can be treated as fill requests.
+
+Example input:
+
+    5+3.9I0.0.0.0WEUC.py
+
+The sorter can resolve parent history and fill the child fields.
+
+Fill behavior:
+
+    child organism 0
+        becomes the sum of parent organism IDs
+
+    child feature 0
+        becomes the sum of resolved parent feature counters
+
+    child bugfix 0
+        becomes the sum of resolved parent bugfix counters
+
+    child divergence 0
+        becomes the sum of exact parent divergence selectors when available
+
+Example concept:
+
+    5+3.9I0.0.0.0WEUC.py
+
+can become something like:
+
+    5+3.9I8.6.3.9WEUC.py
+
+This is meant to let the developer write a compact merge birth and let the sorter fill the exact integration coordinate from history.
+
+
+Folder law
+==========
+
+Exact specimen folder
+    A folder that directly represents one version/specimen.
+    Files inside it are payloads.
+    Package artifacts inside exact specimen folders should not become separate GUI nodes.
+
+Neutral container folder
+    A folder that contains multiple versioned specimens, child folders, or artifacts.
+    It usually uses management flags like R, M, or RM.
+
+Single-specimen folder
+    A folder containing one implementation/specimen.
+    It may expose specimen flags directly.
+
+Multi-specimen folder
+    A folder containing multiple specimens or child version folders.
+    It should behave as a neutral container.
+
+Notes files
+    Notes.txt or versioned .txt/.md/.rst files are metadata.
+    Notes do not by themselves create a divergence.
+
+
+Root drop sorting behavior
+==========================
+
+The sorter watches Workshop/ for root-dropped versioned implementation files.
+
+Root-dropped implementation files are files placed directly inside Workshop/ that have a recognizable version name.
+
+When a valid versioned implementation is dropped into Workshop/:
+
+    The sorter parses the version.
+    It chooses or creates the correct organism container.
+    It may auto-bump divergence if the incoming divergence already exists.
+    It moves the file into the correct destination folder.
+    It writes backup data before applying moves.
+
+If exactly one implementation is dropped and notes are also dropped, notes can be attached to the same destination.
+
+If multiple implementation files are dropped with notes, notes stay in Workshop/ unless handled manually.
+
+
+Malformed merge protection
+==========================
+
+A name that looks like a merge but is missing the I marker is considered malformed.
+
+Bad example:
+
+    5+3.98.6.3.9WEUC.py
+
+Good example:
+
+    5+3.9I8.6.3.9WEUC.py
+
+The I marker is required so the sorter can distinguish parent lineage from child integration lineage.
+
+
+Package artifact handling
+=========================
+
+Prefixes before a valid version are allowed when they contain human-readable letters or safe prefix characters.
+
+Examples:
+
+    ROOT1.0.0.2P.zip
+    EXAMPLE1.0.0.0SEWC#demo.py
+    OLD+1.0.0.0SEW.py
+
+Multiple package artifacts with the same coordinate can collapse into one specimen node in the GUI.
+
+The coordinate ignores packaging prefix and role/display decoration when grouping artifacts.
+
+This prevents package files like .zip, .xpi, .py, or other build artifacts from inventing fake extra organisms.
+
+
+R and M rules
+=============
+
+R means recent/current in a lineage context.
+
+M means main in a lineage context.
+
+Only one item should normally carry R in the same lineage context.
+
+A folder ending in M or RM means the container is being marked as the main/recent line.
+
+A file ending in M means that specific specimen is chosen as main.
+
+The sorter and GUI help show these markers, but the developer still decides when a snapshot is meaningful.
+
+
+Double-digit integration warning
+================================
+
+In typical Workshop lineages, integration components such as x.xIx.x.x.x rarely need to go above single digits.
+
+If an integration component goes above single digits, it usually signals an unusually complex merge or exceptional project lineage.
+
+This is allowed, but it is a warning sign that the GUI should be used to inspect the history.
+
+
+H3Proxy examples
+================
+
+2.9.1.11SWCMR#Core-PreUIbug
+    organism 2
+    feature 9
+    bugfix 1
+    divergence 11
+    stable / working / checkpoint / main / recent
+    role: Core-PreUIbug
+
+2.10.2.13UW#NonFatal
+    organism 2
+    feature 10
+    bugfix 2
+    divergence 13
+    unstable / working
+    role: NonFatal
+
+2.10.3.14SEW#PrototypeCore
+    organism 2
+    feature 10
+    bugfix 3
+    divergence 14
+    stable / experimental / working
+    role: PrototypeCore
+
+
+Quick reading guide
+===================
+
+When reading a version name:
+
+    Read the numbers as lineage coordinates, not SemVer.
+    Read the flags as condition/status.
+    Read #role as the human purpose of the build.
+    Read @compat as compatibility context.
+    If the name contains I, treat it as a merge/integration lineage.
+
+Example:
+
+    2.10.3.14SEW#PrototypeCore
+
+means:
+
+    organism 2
+    feature movement 10
+    bugfix/sublineage 3
+    divergence/checkpoint 14
+    stable enough structurally
+    experimental
+    working
+    prototype core build
+
