@@ -116,9 +116,29 @@ Primary target:
 
 ```text
 New Nintendo 3DS LL / New Nintendo 3DS XL
-```
+
+This build is designed around New 3DS-class homebrew hardware.
+
+H3Proxy requests the New 3DS high-clock/L2 speedup path when available, but the client was also tested in a lower-speed state where it appeared to be running around the old CPU clock range without L2 cache. In that mode, H3Proxy still worked and was usable, but performance was only decent rather than smooth.
+
+Expected performance:
+
+New 3DS high-clock + L2:
+  intended target
+  best experience
+  recommended mode
+
+Lower clock / no L2:
+  usable in testing
+  not awful
+  not ideal
+  expect lower FPS and rougher media behavior
+
+Old 3DS / 2DS hardware is not officially supported by this release. It may be technically possible later, but this build should be treated as a New 3DS-targeted release until real Old 3DS hardware testing is done.
+
 
 Other hardware may work later, but this build is designed around New 3DS-class homebrew hardware.
+```
 
 ## Release Layout
 
