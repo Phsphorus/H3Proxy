@@ -497,6 +497,9 @@ stb_image.h is from the stb single-file public-domain/MIT-style library collecti
 
 Third-party components retain their own licenses.
 
+#timeperiod
+project first started 5/27/2026 @ 8:00am
+
 #License
 
 H3Proxy is licensed under the Apache License 2.0.
