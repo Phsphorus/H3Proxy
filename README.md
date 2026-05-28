@@ -1,179 +1,329 @@
-#H3Proxy
+# H3Proxy
 
-Hybrid proxy browser for New Nintendo 3DS: server-side Firefox renders the modern web into a tile stream for a homebrew 3DS client.
+Hybrid proxy browser for New Nintendo 3DS: server-side Firefox renders the modern web into a tile/media stream for a homebrew 3DS client.
 
 H3Proxy is an independent homebrew project and is not affiliated with, endorsed by, sponsored by, or approved by Nintendo.
 
-Nintendo 3DS and related names are trademarks of Nintendo. This project does not include Nintendo firmware, SDK files, copyrighted assets, game files, keys, or circumvention tools.
+Nintendo 3DS and related names are trademarks of Nintendo. This project does not include Nintendo firmware, SDK files, copyrighted assets, game files, keys, ROMs, CIAs, or circumvention tools.
 
 The H3Proxy source code is licensed under the Apache License 2.0. Third-party dependencies retain their own licenses.
 
-#What H3Proxy Does
+## Important: The Source Zip Is Required
 
-H3Proxy lets a New Nintendo 3DS act like a lightweight browser terminal.
+The `.3dsx` file is only the 3DS client.
 
-The 3DS does not run a modern browser engine itself. Instead:
+You also need the source zip because it contains the H3Proxy server code and tools. The 3DS client does not browse the web by itself. It connects to the H3Proxy server, and the server does the actual modern browser work.
 
-PC/server:
-  runs Firefox through Playwright
-  loads modern websites
-  handles TLS, JavaScript, CSS, DOM, media, and page rendering
-  captures the visible 400x240 viewport
-  splits the viewport into small tiles
-  sends changed tiles and media frames to the 3DS
+A normal release should include:
 
-New Nintendo 3DS:
-  connects to the H3Proxy server over WebSocket
-  sends input events
-  receives tile/media packets
-  decodes PNG/JPEG payloads with stb_image
-  converts/draws the image data to the 3DS framebuffer
-  reports hardware capability and runtime stats back to the server
+```text
+h3proxy_3ds.3dsx
+  The 3DS Homebrew Launcher client.
+
+H3Proxy-<version>-source.zip
+  The server code, tools, and frozen source snapshot.
+```
+
+If you only download the `.3dsx`, you do not have a working H3Proxy setup.
+
+## What H3Proxy Does
+
+H3Proxy turns a New Nintendo 3DS into a lightweight browser terminal.
+
+The server runs Firefox through Playwright, loads modern websites, handles TLS, JavaScript, CSS, DOM, page rendering, and media/canvas capture, then sends a compressed tile/media stream to the 3DS.
+
+The 3DS receives that stream, decodes the image data, displays it, and sends input events back to the server.
 
 In simple terms:
 
-Firefox does the modern web.
-The 3DS displays the result and sends controls back.
-Current Status
+```text
+The server runs the modern web.
+The 3DS displays it and controls it.
+```
 
-This is an early prototype hardware build.
+## Current Build
 
-Working:
+Current release line:
 
+```text
+2.12.6.18SEWCM#SecureCore
+```
+
+This is the current working SecureCore prototype.
+
+The version includes `E` because the SecureCore transport/network path is experimental. Secure transport support exists in the code, but it has not been fully real-hardware-tested yet.
+
+Meaning of the important status letters here:
+
+```text
+S = stable enough structurally
+E = experimental component present
+W = working
+C = checkpoint
+M = main/current line
+```
+
+## Current Status
+
+Working / implemented:
+
+```text
 New Nintendo 3DS homebrew client
-SD logging
+Firefox/Playwright server backend
+server dashboard
+LAN server mode
+3DS-side WebSocket transport
 SD config file
+SD logging
 hardware calibration
-server pairing screen
-WebSocket connection
-client_caps and client_stats
-tile stream protocol
+New 3DS high-clock/L2 speedup request
+400x240 viewport streaming
+100x60 tile updates
+PNG/JPEG image decode
 touch input
 scroll input
-keyboard/text input
-browser back/forward/reload
+text input
+browser back/forward/reload controls
+client capability reporting
+runtime client stats
 experimental media/canvas mode
-server dashboard
-PC debug client
+tools for LAN and secure server launch
+```
 
-Known issues:
+SecureCore experimental features:
 
-UI and rendering bugs remain
-media mode is experimental
-some browser automation errors can happen during navigation
-LAN ws:// mode is the main tested path
-remote encrypted mode is not finalized
-not tested on old 3DS hardware
-Hardware Target
+```text
+HTTPS server mode
+WSS secure WebSocket mode
+3DS-side secure transport path
+access-token protected server mode
+secure deployment support
+```
+
+Known limitations:
+
+```text
+SecureCore transport/network is experimental and not fully hardware-tested.
+Media/canvas mode is experimental.
+Some websites may behave badly or need tuning.
+The server code is required; the .3dsx alone is not enough.
+Old 3DS hardware is not the target for this build.
+```
+
+## Hardware Target
 
 Primary target:
 
+```text
 New Nintendo 3DS LL / New Nintendo 3DS XL
+```
 
 Other hardware may work later, but this build is designed around New 3DS-class homebrew hardware.
 
-Repository / Release Layout
+## Release Layout
 
-The GitHub repo itself is mainly the project landing page.
+The GitHub repo itself is mostly the project landing page.
 
 Actual source snapshots and runnable builds are distributed through GitHub Releases.
 
-A typical release contains:
+Download both:
 
+```text
+1. h3proxy_3ds.3dsx
+2. H3Proxy-<version>-source.zip
+```
+
+The source zip should contain folders like:
+
+```text
+client_3ds/
+h3proxy/
+tools/
+```
+
+## Quick Start
+
+### 1. Download Both Release Assets
+
+Download:
+
+```text
 h3proxy_3ds.3dsx
-  Homebrew Launcher build for the 3DS
+H3Proxy-2.12.6.18SEWCM-SecureCore-source.zip
+```
 
-H3Proxy-<version>-source.zip
-  Frozen source snapshot containing:
-    client_3ds/
-    h3proxy/
-    tools/
-Installing The 3DS Client
+The `.3dsx` goes on the 3DS.
 
-Download the .3dsx file from the latest GitHub Release.
+The source zip gets extracted on the PC/server.
 
-Put it on the 3DS SD card like this:
+### 2. Install The 3DS Client
 
+Put the `.3dsx` on the 3DS SD card:
+
+```text
 SD:/
   3ds/
     h3proxy_3ds/
       h3proxy_3ds.3dsx
+```
 
-Launch it from the Homebrew Launcher.
+Then launch it from the Homebrew Launcher.
 
 The client writes logs here:
 
+```text
 sdmc:/h3proxy.log
+```
 
 The client stores config here:
 
+```text
 sdmc:/h3proxy.cfg
-Server Requirements
+```
 
-The server side needs Python 3 and a Playwright Firefox install.
+### 3. Extract The Source Zip On The Server PC
 
-Python dependencies used by the server:
+Extract the source zip somewhere on the PC that will run the server.
 
-fastapi
-uvicorn
-playwright
-pillow
+Example:
 
-Install dependencies:
+```text
+D:\H3Proxy\
+```
 
+The extracted folder should contain:
+
+```text
+h3proxy/
+client_3ds/
+tools/
+```
+
+### 4. Install Server Dependencies
+
+The server needs Python 3 and Playwright Firefox.
+
+Install the Python dependencies:
+
+```cmd
 pip install fastapi uvicorn playwright pillow
 python -m playwright install firefox
+```
 
-A virtual environment is recommended.
+If the release includes a `requirements.txt`, you can use:
 
-Starting The Server
+```cmd
+pip install -r requirements.txt
+python -m playwright install firefox
+```
 
-For LAN testing, the server should listen on all interfaces so the 3DS can reach it.
+### 5. Start LAN Server
 
-From the source snapshot root, use:
+From the extracted source folder:
 
+```cmd
 tools\start_lan_server.cmd
+```
 
-That script sets:
+Or start manually:
 
-H3PROXY_HOST=0.0.0.0
-H3PROXY_PORT=8766
-H3PROXY_HEADLESS=true
-
-Then starts:
-
-python -m h3proxy
-
-Manual start example:
-
+```cmd
 set H3PROXY_HOST=0.0.0.0
 set H3PROXY_PORT=8766
 set H3PROXY_HEADLESS=true
 python -m h3proxy
+```
 
 Open the dashboard on the server PC:
 
+```text
 http://127.0.0.1:8766/
+```
 
 From another LAN device, use the server LAN IP:
 
-http://SERVER-IP:8766/
+```text
+http://SERVER-LAN-IP:8766/
+```
 
 Example:
 
+```text
 http://192.168.1.116:8766/
-3DS First Launch / Pairing
+```
+
+### 6. Point The 3DS At The Server
+
+On first launch, the 3DS client can create/edit:
+
+```text
+sdmc:/h3proxy.cfg
+```
+
+Example LAN config:
+
+```text
+server=http://192.168.1.116:8766
+start_url=/start
+quality=normal
+token=
+auth_token=
+```
+
+Leaving `token` blank is preferred for normal testing. The 3DS will ask the server to create a fresh session.
+
+## SecureCore / Secure Server Mode
+
+Secure mode is experimental.
+
+For reliable testing, use LAN mode first.
+
+Secure server mode requires a certificate, key, and access token.
+
+Example:
+
+```cmd
+set H3PROXY_ACCESS_TOKEN=put-a-long-random-token-here
+set H3PROXY_SSL_CERTFILE=C:\path\to\cert.pem
+set H3PROXY_SSL_KEYFILE=C:\path\to\privkey.pem
+set H3PROXY_PORT=8766
+tools\start_secure_server.cmd
+```
+
+Secure dashboard:
+
+```text
+https://SERVER-HOST:8766/
+```
+
+Example secure 3DS config:
+
+```text
+server=https://SERVER-HOST:8766
+start_url=https://google.com
+quality=normal
+token=
+auth_token=put-a-long-random-token-here
+```
+
+Do not expose H3Proxy publicly without an access token.
+
+Secure transport/network is marked experimental because this path is implemented but not fully tested on real hardware.
+
+## 3DS Pairing / First Launch
 
 On launch, the 3DS client runs:
 
+```text
 hardware calibration
-server pairing
-WebSocket connection
-
-The pairing screen lets you choose the server IP and port directly on the 3DS.
+server setup / pairing
+network connection
+WebSocket session
+```
 
 Pairing controls:
 
+```text
 D-Pad Up / Down:
   switch private IP range
 
@@ -191,55 +341,35 @@ X:
 
 START:
   exit pairing
+```
 
-Supported private ranges in the pairing screen:
+Supported private ranges:
 
+```text
 10.0.0.0/8
 172.16.0.0/12
 192.168.0.0/16
+```
 
 Default config if no config exists:
 
+```text
 server=http://192.168.1.100:8766
 start_url=/start
 quality=normal
 token=
+auth_token=
+```
 
-Leaving token blank is recommended. The 3DS will create a fresh session with the server automatically.
-
-Manual 3DS Config
-
-You can edit:
-
-sdmc:/h3proxy.cfg
-
-Example:
-
-server=http://192.168.1.116:8766
-start_url=/start
-quality=normal
-token=
-
-start_url can be a full URL:
-
-https://example.com
-https://google.com
-https://en.m.wikipedia.org/wiki/Main_Page
-
-or a server-local path:
-
-/start
-/debug/animation
-/debug/input
-/debug/media
-Runtime Controls
+## Runtime Controls
 
 Main browser controls:
 
+```text
 Circle Pad:
   scroll page
 
-Touchscreen top/page area:
+Touchscreen page area:
   touch/click/drag inside the browser viewport
 
 L:
@@ -268,22 +398,27 @@ SELECT:
 
 Hold START for about 3 seconds:
   quit the client
-Bottom Screen Layout
+```
+
+## Bottom Screen Layout
 
 The bottom screen is split into:
 
+```text
 top 180 px:
   page/touch pad area
 
 bottom 60 px:
   dock controls
+```
 
 The top page pad maps touch input into the 400x240 browser viewport.
 
 The dock area provides quick browser controls.
 
-Current dock behavior in this prototype:
+Prototype dock behavior:
 
+```text
 top dock row:
   tap left/middle area to edit URL/start_url
   tap right side to Go/open current URL
@@ -291,12 +426,17 @@ top dock row:
 lower dock area:
   tap left/middle area to open text keyboard and send text to the page
   tap right side to send Enter
+```
 
-Some UI text may mention DOM selection or quality cycling. Those controls are still prototype/incomplete in this build.
+Some UI behavior is still prototype-level and may change.
 
-Debug Pages
+## Debug Pages
 
 The server includes local test pages:
+
+```text
+/
+  server dashboard
 
 /start
   simple H3Proxy start page
@@ -312,55 +452,65 @@ The server includes local test pages:
 
 /debug/client
   PC browser debug client
+```
 
-/
-  server dashboard
+Recommended test order:
 
-These are useful before testing heavy external sites.
-
-Recommended first test:
-
+```text
 /debug/animation
-
-Then:
-
 /debug/input
-
-Then:
-
 /start
+then external websites
+```
 
-Then try external pages.
-
-How The Protocol Works
+## How The Protocol Works
 
 The 3DS creates or uses a server session.
 
 Session creation:
 
+```text
 POST /sessions
+```
 
 The server returns:
 
+```text
 token
 websocket_path
 viewport
 tile size
 auto_update flag
 protocol max FPS
+```
 
-The 3DS then connects:
+The 3DS connects to:
 
+```text
 ws://SERVER-IP:8766/ws/<token>
+```
 
-The 3DS sends:
+or, in SecureCore mode:
 
-{"type":"client_caps", "...":"..."}
+```text
+wss://SERVER-HOST:8766/ws/<token>
+```
+
+The 3DS sends messages like:
+
+```json
+{"type":"client_caps"}
 {"type":"hello","viewport":{"width":400,"height":240},"quality":"normal"}
 {"type":"open_url","url":"/start"}
+{"type":"client_stats"}
+{"type":"touch_down","x":100,"y":80}
+{"type":"touch_up","x":100,"y":80}
+{"type":"text","text":"example"}
+```
 
 The server sends text messages for:
 
+```text
 hello
 status
 error
@@ -372,37 +522,52 @@ media_start
 media_stop
 client_policy
 server_policy
+```
 
 The server sends binary messages for:
 
+```text
 tile
 media_frame
+```
 
 Binary packets use:
 
+```text
 4 byte big-endian JSON header length
 JSON header
 binary payload
+```
 
-Tile packets contain small PNG/JPEG images for changed regions of the 400x240 viewport.
+Default viewport:
+
+```text
+400x240
+```
 
 Default tile size:
 
+```text
 100x60
+```
 
-So the visible top-screen viewport is normally:
+That makes the normal top-screen viewport:
 
+```text
 4 columns x 4 rows = 16 tiles
-Media Mode
+```
+
+## Media Mode
 
 H3Proxy can detect video/canvas-like regions and offer media mode.
 
-Media mode sends a JPEG stream for the active media rectangle instead of treating everything as page tiles.
+Media mode sends a JPEG stream for the active media rectangle instead of treating everything as normal page tiles.
 
 This is experimental.
 
-Expected behavior:
+Expected flow:
 
+```text
 server detects media/canvas region
 server sends media_offer
 3DS requests start_media
@@ -410,19 +575,24 @@ server sends media_frame binary packets
 3DS decodes/draws media frames
 3DS sends stats back
 server may throttle based on decode/queue/dropped-frame pressure
-Client Hardware Calibration
+```
+
+## Client Hardware Calibration
 
 On boot, the 3DS client measures:
 
+```text
 safe RAM budget
 SD write speed
 RGB565 tile/frame conversion timing
 texture/cache estimates
+```
 
-The client reports this as client_caps.
+The client reports this as `client_caps`.
 
-Example capabilities:
+Example:
 
+```json
 {
   "type": "client_caps",
   "profile": "New 3DS LL / XL",
@@ -432,13 +602,15 @@ Example capabilities:
   "safe_ram_bytes": 76336332,
   "safe_texture_cache_tiles": 256
 }
+```
 
 The server uses this information to adjust page/media FPS and runtime policy.
 
-Server Environment Variables
+## Server Environment Variables
 
 Useful server variables:
 
+```text
 H3PROXY_HOST
   default: 127.0.0.1
   LAN testing: 0.0.0.0
@@ -467,40 +639,62 @@ H3PROXY_JPEG_QUALITY
 
 H3PROXY_PROTOCOL_MAX_FPS
   default: 60
-Building The 3DS Client From Source
+
+H3PROXY_ACCESS_TOKEN
+  required for secure/public-style mode
+
+H3PROXY_SSL_CERTFILE
+  certificate path for HTTPS/WSS server mode
+
+H3PROXY_SSL_KEYFILE
+  private key path for HTTPS/WSS server mode
+```
+
+## Building The 3DS Client From Source
 
 Expected toolchain:
 
+```text
 devkitPro
 devkitARM
 libctru
+```
 
 Build helper:
 
+```cmd
 tools\build_3ds.cmd
+```
 
-Or from inside client_3ds/:
+Or from inside `client_3ds/`:
 
+```cmd
 make
+```
 
-The output .3dsx is the Homebrew Launcher build.
+The `.3dsx` is the Homebrew Launcher build.
 
-The .elf is a debug/build artifact and is not required for normal users.
-
-#Third-Party Code
+## Third-Party Code
 
 The 3DS client vendors:
 
+```text
 client_3ds/third_party/stb_image.h
+```
 
-stb_image.h is from the stb single-file public-domain/MIT-style library collection. See the header itself for its license text.
+`stb_image.h` is from the stb single-file public-domain/MIT-style library collection. See the header itself for its license text.
 
 Third-party components retain their own licenses.
 
-#timeperiod
-project first started 5/27/2026 @ 8:00am
+## Project Timeline
 
-#License
+Project first started:
+
+```text
+May 27, 2026 around 8:00 AM
+```
+
+## License
 
 H3Proxy is licensed under the Apache License 2.0.
 
@@ -508,14 +702,17 @@ Original project by Phsphorus.
 
 See:
 
+```text
 LICENSE
 NOTICE
-Legal Notice
+```
 
-3H3Proxy is an independent homebrew project.
+## Legal Notice
+
+H3Proxy is an independent homebrew project.
 
 It is not affiliated with, endorsed by, sponsored by, or approved by Nintendo.
 
 Nintendo 3DS and related names are trademarks of Nintendo.
 
-This project does not include Nintendo firmware, SDK files, copyrighted assets, game files, keys, or circumvention tools.
+This project does not include Nintendo firmware, SDK files, copyrighted assets, game files, keys, ROMs, CIAs, or circumvention tools.
