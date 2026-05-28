@@ -17,8 +17,4 @@ h3proxy.log
 h3proxy.cfg
 
 *.zip
-*.7z
-*.exe
 
-.DS_Store
-Thumbs.db
